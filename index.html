@@ -190,15 +190,22 @@
                   <div class="input-wrapper">
                     <input type="number" name="monto" placeholder="Monto" min="0.00" max="1000000.00" required
                       class="input-field">
-
-                    <select name="detalle[]" class="input-field js-example-basic-multiple" multiple="multiple" required>
-
-                      <option value="Corte de pelo">Corte de pelo</option>
-                      <option value="Corte cejas">Corte de cejas</option>
-                      <option value="Corte de barba">Corte de barba</option>
-                      <option value="Tintura">Tintura</option>
-                    </select>
+                      <select id="detalleSelect" name="detalle[]" class="input-field" required>
+                        <option value="">Seleccione una opcion</option>
+                        <option value="Bebidas">Bebidas (precio: 550-10ptos)</option>
+                        <option value="Productos">Productos (precio: 600-15ptos)</option>
+                        <option value="Barba">Barba (precio: 700-20ptos)</option>
+                        <option value="Corte">Corte (precio: 750-30ptos)</option>
+                        <option value="Corte + Barba">Corte + Barba (precio: 1000-50ptos)</option>
+                      </select>
                   </div>
+                  <div id="infoOpcionesElegidas" style="display: none;">
+                    <div class="opciones-elegidas">
+                      <p class="section-text">Opciones realizadas</p>
+                      <ul id="opcionesElegidasList"></ul>
+                    </div>
+                  </div>
+                  <br>
                   <button type="submit" class="form-btn">
                     <span class="span">Guardar</span>
                     <ion-icon name="arrow-forward" aria-hidden="true"></ion-icon>
@@ -278,7 +285,7 @@
     <ion-icon name="chevron-up" aria-hidden="true"></ion-icon>
   </a>
 
-  
+
   <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

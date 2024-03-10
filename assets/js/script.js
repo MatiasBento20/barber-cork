@@ -103,11 +103,11 @@ document.addEventListener("DOMContentLoaded", function () {
         email
       );
       mostrarAlerta("info", msg, "");
-      // formularioClientes.name.value;
-      // formularioClientes.dni.value;
-      // formularioClientes.date.value;
-      // formularioClientes.phone.value;
-      // formularioClientes.email.value;
+      formularioClientes.name.value = "";
+      formularioClientes.dni.value = "";
+      formularioClientes.date.value = "";
+      formularioClientes.phone.value = "";
+      formularioClientes.email.value = "";
     } catch (error) {
       console.error(error);
       if (error.response.data.errno == 1062) {
@@ -179,7 +179,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "error",
         "Error al buscar cliente por DNI",
         "Por favor, intenta de nuevo."
-        );
+      );
     } finally {
       ocultarLoader();
     }
@@ -220,6 +220,28 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  function calcularPuntos(detalle) {
+    const puntosPorOpcion = {
+      Bebidas: 10,
+      Productos: 15,
+      Barba: 20,
+      Corte: 30,
+      "Corte + Barba": 50,
+    };
+
+    const opciones = detalle.split(";");
+    let puntosTotales = 0;
+
+    opciones.forEach((opcion) => {
+      const opcionLimpia = opcion.trim();
+      if (puntosPorOpcion[opcionLimpia]) {
+        puntosTotales += puntosPorOpcion[opcionLimpia];
+      }
+    });
+
+    return puntosTotales;
+  }
+
   var formularioVentas = document.querySelector(".ventas-form");
 
   formularioVentas.addEventListener("submit", async function (event) {
@@ -227,11 +249,13 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
       mostrarLoader();
       var montoCobrado = formularioVentas.monto.value;
-      var detalle = formularioVentas.detalle.value;
+      var detalle = Array.from(opcionesElegidasList.getElementsByTagName("li"))
+        .map((li) => li.textContent)
+        .join(";");
       var empleado = formularioVentas.empleado.value;
       var dni = formularioVentas.dniCliente.value;
       var sucursal = formularioVentas.sucursal.value;
-      var puntos = 1000;
+      var puntos = calcularPuntos(detalle);
 
       var msg = await guardarVenta(
         montoCobrado,
@@ -294,6 +318,72 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
+document.addEventListener("DOMContentLoaded", function () {
+  const selectElement = document.getElementById("detalleSelect");
+  const opcionesElegidasDiv = document.getElementById("infoOpcionesElegidas");
+  let opcionesElegidasList = document.getElementById("opcionesElegidasList");
+
+  if (!opcionesElegidasList) {
+    opcionesElegidasList = document.createElement("ul");
+    opcionesElegidasList.id = "opcionesElegidasList";
+    opcionesElegidasDiv
+      .querySelector(".opciones-elegidas")
+      .appendChild(opcionesElegidasList);
+  }
+
+  selectElement.addEventListener("change", function () {
+    updateOpcionesElegidasList();
+  });
+
+  opcionesElegidasList.addEventListener("click", function (event) {
+    if (event.target.tagName === "LI") {
+      returnOptionToSelect(event.target.textContent);
+      event.target.remove();
+      checkOpcionesElegidasVisibility();
+    }
+  });
+
+  function updateOpcionesElegidasList() {
+    const opcionSeleccionada = selectElement.value;
+
+    if (opcionSeleccionada.trim() !== "") {
+      const listItem = document.createElement("li");
+      listItem.textContent = opcionSeleccionada;
+
+      opcionesElegidasList.appendChild(listItem);
+      selectElement.value = ""; // Limpiar el valor seleccionado
+
+      removeOptionFromSelect(opcionSeleccionada);
+      showOpcionesElegidasDiv();
+    }
+  }
+
+  function removeOptionFromSelect(value) {
+    const optionToRemove = selectElement.querySelector(
+      `option[value="${value}"]`
+    );
+    if (optionToRemove) {
+      optionToRemove.remove();
+    }
+  }
+
+  function returnOptionToSelect(value) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.text = value;
+    selectElement.appendChild(option);
+  }
+
+  function showOpcionesElegidasDiv() {
+    opcionesElegidasDiv.style.display = "block";
+  }
+
+  function checkOpcionesElegidasVisibility() {
+    if (opcionesElegidasList.childElementCount === 0) {
+      opcionesElegidasDiv.style.display = "none";
+    }
+  }
+});
 // TRANSACCIONES
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -312,6 +402,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (resultados && resultados.length > 0) {
         mostrarAlerta("info", "Se encontraron resultados", "");
         mostrarTabla(resultados);
+        formularioTransacciones.dniTransacciones.value = "";
       } else {
         mostrarAlerta(
           "warning",

@@ -162,6 +162,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // VENTAS
 
+var dniCliente = "";
 document.addEventListener("DOMContentLoaded", function () {
   var buscarClienteBtn = document.getElementById("buscarClienteBtn");
   var infoClienteDiv = document.getElementById("infoCliente");
@@ -190,16 +191,96 @@ document.addEventListener("DOMContentLoaded", function () {
     <h3>Información del Cliente</h3>
     <p>Nombre: ${cliente.Nombre} ${cliente.Apellido}</p>
     <p>DNI: ${cliente.DNI}</p>
-        <p>Email: ${cliente.Email}</p>
-        <p>Telefono: ${cliente.Telefono}</p>
-        `;
+    <p>Email: ${cliente.Email}</p>
+    <p>Telefono: ${cliente.Telefono}</p>
+    <p>Fecha de Nacimiento: ${cliente.FechaNacimiento}</p>
+    <p>PuntosTotales: ${cliente.PuntosTotales}</p>
+    `;
+    // if (cliente.PuntosTotales > 0) {
+      infoClienteHTML += `<button id="canjearPuntosBtn">Canjear Puntos</button>`;
+    // }
+
     infoClienteDiv.innerHTML = infoClienteHTML;
     infoClienteDiv.style.display = "block";
     infoVentaDiv.style.display = "block";
+
+    var canjearPuntosBtn = document.getElementById("canjearPuntosBtn");
+    if (canjearPuntosBtn) {
+      canjearPuntosBtn.addEventListener("click", function () {
+        mostrarDialogoCanje(cliente.PuntosTotales);
+      });
+    }
+  }
+
+  function mostrarDialogoCanje(puntosDisponibles) {
+    Swal.fire({
+      title: 'Canjear Puntos',
+      html: `<p>Ingrese la cantidad de puntos que desea canjear (Disponibles: ${puntosDisponibles}):</p>`,
+      input: 'text',
+      inputAttributes: {
+        type: 'number',
+        min: '0',
+        max: puntosDisponibles,
+      },
+      showCancelButton: true,
+      confirmButtonText: 'Canjear',
+      cancelButtonText: 'Cancelar',
+      allowOutsideClick: false,
+      preConfirm: (canjeInput) => {
+        // Aquí puedes realizar la lógica para canjear los puntos con el valor ingresado
+        if (canjeInput === '' || isNaN(canjeInput)) {
+          Swal.showValidationMessage('Por favor, ingrese una cantidad válida.');
+        }
+      }
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const puntosCanjeados = result.value;
+        try {
+          mostrarLoader();
+          await canjearPuntos();
+          mostrarAlerta(
+            "info",
+            "Operación realizada exitosamente",
+            `Puntos canjeados: ${puntosCanjeados}`
+          );
+        } catch (error) {
+          console.error(error);
+          mostrarAlerta(
+            "error",
+            "Error al canjear los puntos",
+            "Por favor, intenta de nuevo."
+          );
+        } finally {
+          ocultarLoader();
+        }
+      }
+    });
+  }
+
+  function canjearPuntos() {
+    return new Promise((resolve, reject) => {
+      const config = {
+        url: `https://cork-be.onrender.com/`,
+        method: "GET",
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Content-Type": "application/json",
+        },
+      };
+
+      axios(config)
+        .then((response) => {
+          resolve(response.data[0]);
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    });
   }
 
   function buscarClientePorDNI() {
     var dni = formularioVentas.dniCliente.value;
+    dniCliente = dni;
     return new Promise((resolve, reject) => {
       const config = {
         url: `https://cork-be.onrender.com/getcustomer/${dni}`,
@@ -212,6 +293,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       axios(config)
         .then((response) => {
+          formularioVentas.dniCliente.value = "";
           resolve(response.data[0]);
         })
         .catch((error) => {
@@ -250,10 +332,10 @@ document.addEventListener("DOMContentLoaded", function () {
       mostrarLoader();
       var montoCobrado = formularioVentas.monto.value;
       var detalle = Array.from(opcionesElegidasList.getElementsByTagName("li"))
-        .map((li) => li.textContent)
-        .join(";");
+                          .map((li) => li.textContent)
+                          .join(";");
       var empleado = formularioVentas.empleado.value;
-      var dni = formularioVentas.dniCliente.value;
+      var dni = dniCliente;
       var sucursal = formularioVentas.sucursal.value;
       var puntos = calcularPuntos(detalle);
 
@@ -425,18 +507,17 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   function mostrarTabla(resultados) {
-    tablaResultados.innerHTML = "";
     tablaResultados.innerHTML += `
-          <thead>
-              <tr>
-                  <th>Monto</th>
-                  <th>Detalle</th>
-                  <th>Fecha</th>
-                  <th>Puntos Acreditados</th>
-              </tr>
-          </thead>
-          <tbody>
-      `;
+    <thead>
+        <tr>
+            <th>Monto</th>
+            <th>Detalle</th>
+            <th>Fecha</th>
+            <th>Puntos Acreditados</th>
+        </tr>
+    </thead>
+    <tbody>
+    `;
 
     resultados.forEach(function (resultado) {
       tablaResultados.innerHTML += `
@@ -450,7 +531,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     tablaResultados.innerHTML += "</tbody>";
-
     tablaResultados.style.display = "table";
   }
 

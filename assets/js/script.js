@@ -237,7 +237,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const puntosCanjeados = result.value;
         try {
           mostrarLoader();
-          await canjearPuntos();
+          await canjearPuntos(puntosCanjeados, dniCliente);
+          var msg = await buscarClientePorDNI(dniCliente);
+          mostrarInfoCliente(msg);
           mostrarAlerta(
             "info",
             "Operación realizada exitosamente",
@@ -257,20 +259,25 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  function canjearPuntos() {
+  function canjearPuntos(puntos, dni) {
     return new Promise((resolve, reject) => {
+      const data = {
+        dni: dni,
+        puntos: puntos
+      };
       const config = {
-        url: `https://cork-be.onrender.com/`,
-        method: "GET",
+        url: `https://cork-be.onrender.com/costumer/puntos`,
+        method: "POST",
         headers: {
           "Access-Control-Allow-Origin": "*",
           "Content-Type": "application/json",
         },
+        data: data
       };
 
       axios(config)
         .then((response) => {
-          resolve(response.data[0]);
+          resolve(response.data);
         })
         .catch((error) => {
           reject(error);
@@ -278,8 +285,8 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  function buscarClientePorDNI() {
-    var dni = formularioVentas.dniCliente.value;
+  function buscarClientePorDNI(otroDNI) {
+    var dni = otroDNI ? otroDNI : formularioVentas.dniCliente.value;
     dniCliente = dni;
     return new Promise((resolve, reject) => {
       const config = {
